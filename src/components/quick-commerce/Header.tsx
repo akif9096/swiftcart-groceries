@@ -1,14 +1,11 @@
-import { Search, MapPin, Zap, ChevronDown } from 'lucide-react';
-import { Address } from './types';
+import { Search, MapPin, Zap } from 'lucide-react';
 
 interface HeaderProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedAddress: Address | null;
-  onAddressClick: () => void;
 }
 
-export const Header = ({ searchQuery, setSearchQuery, selectedAddress, onAddressClick }: HeaderProps) => (
+export const Header = ({ searchQuery, setSearchQuery }: HeaderProps) => (
   <header className="gradient-header text-primary-foreground p-5 pb-6 rounded-b-3xl shadow-lg">
     <div className="flex justify-between items-center mb-4">
       <div className="flex items-center gap-2">
@@ -20,16 +17,10 @@ export const Header = ({ searchQuery, setSearchQuery, selectedAddress, onAddress
           <h1 className="text-xl font-extrabold tracking-tight">10 minutes</h1>
         </div>
       </div>
-      <button 
-        onClick={onAddressClick}
-        className="flex items-center gap-1.5 bg-primary-foreground/15 px-3 py-1.5 rounded-full hover:bg-primary-foreground/25 transition-colors"
-      >
+      <div className="flex items-center gap-1.5 bg-primary-foreground/15 px-3 py-1.5 rounded-full">
         <MapPin className="w-3.5 h-3.5" />
-        <span className="text-xs font-semibold max-w-[80px] truncate">
-          {selectedAddress?.label || 'Add Address'}
-        </span>
-        <ChevronDown className="w-3 h-3" />
-      </button>
+        <span className="text-xs font-semibold">Home</span>
+      </div>
     </div>
 
     <div className="relative">
