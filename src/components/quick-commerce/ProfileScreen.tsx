@@ -1,13 +1,21 @@
-import { User, MapPin, CreditCard, HelpCircle, LogOut, ChevronRight, Bell, Heart, Package } from 'lucide-react';
+import { User as UserIcon, MapPin, CreditCard, HelpCircle, LogOut, ChevronRight, Bell, Heart, Package } from 'lucide-react';
+import { User } from './types';
 
-export const ProfileScreen = () => {
+interface ProfileScreenProps {
+  user: User | null;
+  onSignIn: () => void;
+  onLogout: () => void;
+  onAddresses: () => void;
+}
+
+export const ProfileScreen = ({ user, onSignIn, onLogout, onAddresses }: ProfileScreenProps) => {
   const menuItems = [
-    { icon: Package, label: 'My Orders', badge: '3' },
-    { icon: Heart, label: 'Favorites' },
-    { icon: MapPin, label: 'Saved Addresses' },
-    { icon: CreditCard, label: 'Payment Methods' },
-    { icon: Bell, label: 'Notifications' },
-    { icon: HelpCircle, label: 'Help & Support' },
+    { icon: Package, label: 'My Orders', badge: '3', action: () => {} },
+    { icon: Heart, label: 'Favorites', action: () => {} },
+    { icon: MapPin, label: 'Saved Addresses', action: onAddresses },
+    { icon: CreditCard, label: 'Payment Methods', action: () => {} },
+    { icon: Bell, label: 'Notifications', action: () => {} },
+    { icon: HelpCircle, label: 'Help & Support', action: () => {} },
   ];
 
   return (
@@ -15,23 +23,32 @@ export const ProfileScreen = () => {
       <div className="gradient-header rounded-2xl p-6 text-primary-foreground mb-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-            <User className="w-8 h-8" />
+            <UserIcon className="w-8 h-8" />
           </div>
           <div>
-            <h2 className="text-xl font-extrabold">Guest User</h2>
-            <p className="text-sm opacity-80">Sign in for a personalized experience</p>
+            <h2 className="text-xl font-extrabold">{user ? user.name : 'Guest User'}</h2>
+            <p className="text-sm opacity-80">
+              {user ? user.email : 'Sign in for a personalized experience'}
+            </p>
+            {user && <p className="text-xs opacity-70 mt-0.5">{user.phone}</p>}
           </div>
         </div>
         
-        <button className="mt-4 w-full bg-primary-foreground/20 hover:bg-primary-foreground/30 py-3 rounded-xl font-bold text-sm transition-colors">
-          Sign In / Sign Up
-        </button>
+        {!user && (
+          <button 
+            onClick={onSignIn}
+            className="mt-4 w-full bg-primary-foreground/20 hover:bg-primary-foreground/30 py-3 rounded-xl font-bold text-sm transition-colors"
+          >
+            Sign In / Sign Up
+          </button>
+        )}
       </div>
 
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
         {menuItems.map((item, index) => (
           <button
             key={item.label}
+            onClick={item.action}
             className={`w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors ${
               index !== menuItems.length - 1 ? 'border-b border-border/50' : ''
             }`}
@@ -50,10 +67,15 @@ export const ProfileScreen = () => {
         ))}
       </div>
 
-      <button className="w-full mt-4 flex items-center justify-center gap-2 p-4 bg-destructive/10 text-destructive rounded-2xl font-bold hover:bg-destructive/20 transition-colors">
-        <LogOut className="w-5 h-5" />
-        Log Out
-      </button>
+      {user && (
+        <button 
+          onClick={onLogout}
+          className="w-full mt-4 flex items-center justify-center gap-2 p-4 bg-destructive/10 text-destructive rounded-2xl font-bold hover:bg-destructive/20 transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+          Log Out
+        </button>
+      )}
 
       <p className="text-center text-xs text-muted-foreground mt-6">
         QuickCart v1.0.0

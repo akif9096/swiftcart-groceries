@@ -1,3 +1,16 @@
+export interface Address {
+  id: number;
+  label: string;
+  address: string;
+  landmark?: string;
+}
+
+export interface User {
+  name: string;
+  email: string;
+  phone: string;
+}
+
 export interface Category {
   id: number;
   name: string;

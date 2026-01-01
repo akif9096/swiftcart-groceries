@@ -4,10 +4,10 @@ import { CartItem } from './types';
 interface CartScreenProps {
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
-  onOrder: () => void;
+  onCheckout: () => void;
 }
 
-export const CartScreen = ({ cart, setCart, onOrder }: CartScreenProps) => {
+export const CartScreen = ({ cart, setCart, onCheckout }: CartScreenProps) => {
   const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const deliveryFee = total > 200 ? 0 : 25;
   const grandTotal = total + deliveryFee;
@@ -108,10 +108,10 @@ export const CartScreen = ({ cart, setCart, onOrder }: CartScreenProps) => {
           </div>
 
           <button
-            onClick={onOrder}
+            onClick={onCheckout}
             className="w-full gradient-primary text-primary-foreground py-4 rounded-2xl font-bold text-lg shadow-button hover:opacity-90 active:scale-[0.98] transition-all"
           >
-            Place Order • ₹{grandTotal}
+            Proceed to Checkout • ₹{grandTotal}
           </button>
         </div>
       )}
