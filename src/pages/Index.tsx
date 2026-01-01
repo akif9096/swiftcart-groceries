@@ -9,6 +9,8 @@ import { ProfileScreen } from '@/components/quick-commerce/ProfileScreen';
 import { CheckoutScreen } from '@/components/quick-commerce/CheckoutScreen';
 import { AddressScreen } from '@/components/quick-commerce/AddressScreen';
 import { AuthScreen } from '@/components/quick-commerce/AuthScreen';
+import { LoginPromptDialog } from '@/components/quick-commerce/LoginPromptDialog';
+import { OrderConfirmDialog } from '@/components/quick-commerce/OrderConfirmDialog';
 import { CATEGORIES, PRODUCTS } from '@/components/quick-commerce/data';
 import { CartItem, Product, Address, User } from '@/components/quick-commerce/types';
 import { toast } from 'sonner';
@@ -22,6 +24,12 @@ const Index = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  
+  // Dialog states
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showOrderConfirm, setShowOrderConfirm] = useState(false);
+  const [pendingPaymentMethod, setPendingPaymentMethod] = useState('');
 
   // Load from localStorage
   useEffect(() => {
@@ -29,6 +37,8 @@ const Index = () => {
     const savedFavorites = localStorage.getItem('quickcart-favorites');
     const savedAddresses = localStorage.getItem('quickcart-addresses');
     const savedUser = localStorage.getItem('quickcart-user');
+    const savedProducts = localStorage.getItem('quickcart-admin-products');
+    
     if (savedCart) setCart(JSON.parse(savedCart));
     if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
     if (savedAddresses) {
@@ -37,6 +47,7 @@ const Index = () => {
       if (parsedAddresses.length > 0) setSelectedAddress(parsedAddresses[0]);
     }
     if (savedUser) setUser(JSON.parse(savedUser));
+    if (savedProducts) setProducts(JSON.parse(savedProducts));
   }, []);
 
   // Save to localStorage
@@ -61,12 +72,12 @@ const Index = () => {
   }, [user]);
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((p) => {
+    return products.filter((p) => {
       const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchCat = selectedCategory === 'all' || p.categoryId === Number(selectedCategory);
       return matchSearch && matchCat;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, products]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -95,13 +106,25 @@ const Index = () => {
   };
 
   const goToCheckout = () => {
+    // Check if user is logged in
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
     setScreen('checkout');
   };
 
   const handlePayment = (method: string) => {
+    // Show confirmation popup before placing order
+    setPendingPaymentMethod(method);
+    setShowOrderConfirm(true);
+  };
+
+  const confirmOrder = () => {
+    setShowOrderConfirm(false);
     setCart([]);
     setScreen('success');
-    toast.success(`Order placed with ${method.toUpperCase()}!`, {
+    toast.success(`Order placed with ${pendingPaymentMethod.toUpperCase()}!`, {
       duration: 3000,
     });
   };
@@ -123,7 +146,16 @@ const Index = () => {
     toast('Logged out successfully', { duration: 2000 });
   };
 
+  const handleLoginPromptLogin = () => {
+    setShowLoginPrompt(false);
+    setScreen('auth');
+  };
+
   const totalCartItems = cart.reduce((sum, item) => sum + item.qty, 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const deliveryFee = cartTotal > 200 ? 0 : 25;
+  const taxes = Math.round(cartTotal * 0.05);
+  const grandTotal = cartTotal + deliveryFee + taxes;
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-background pb-24">
@@ -216,6 +248,24 @@ const Index = () => {
       {!['success', 'checkout', 'address', 'auth'].includes(screen) && (
         <BottomNav active={screen} setActive={setScreen} cartCount={totalCartItems} />
       )}
+
+      {/* Login Prompt Dialog */}
+      <LoginPromptDialog 
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+        onLogin={handleLoginPromptLogin}
+      />
+
+      {/* Order Confirmation Dialog */}
+      <OrderConfirmDialog
+        open={showOrderConfirm}
+        onClose={() => setShowOrderConfirm(false)}
+        onConfirm={confirmOrder}
+        totalAmount={grandTotal}
+        itemCount={cart.length}
+        address={selectedAddress}
+        paymentMethod={pendingPaymentMethod}
+      />
     </div>
   );
 };
