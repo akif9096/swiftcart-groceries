@@ -6,8 +6,11 @@ import { CartScreen } from '@/components/quick-commerce/CartScreen';
 import { BottomNav } from '@/components/quick-commerce/BottomNav';
 import { OrderSuccess } from '@/components/quick-commerce/OrderSuccess';
 import { ProfileScreen } from '@/components/quick-commerce/ProfileScreen';
+import { CheckoutScreen } from '@/components/quick-commerce/CheckoutScreen';
+import { AddressScreen } from '@/components/quick-commerce/AddressScreen';
+import { AuthScreen } from '@/components/quick-commerce/AuthScreen';
 import { CATEGORIES, PRODUCTS } from '@/components/quick-commerce/data';
-import { CartItem, Product } from '@/components/quick-commerce/types';
+import { CartItem, Product, Address, User } from '@/components/quick-commerce/types';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -16,16 +19,27 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<number[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
-  // Load cart from localStorage
+  // Load from localStorage
   useEffect(() => {
     const savedCart = localStorage.getItem('quickcart-cart');
     const savedFavorites = localStorage.getItem('quickcart-favorites');
+    const savedAddresses = localStorage.getItem('quickcart-addresses');
+    const savedUser = localStorage.getItem('quickcart-user');
     if (savedCart) setCart(JSON.parse(savedCart));
     if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
+    if (savedAddresses) {
+      const parsedAddresses = JSON.parse(savedAddresses);
+      setAddresses(parsedAddresses);
+      if (parsedAddresses.length > 0) setSelectedAddress(parsedAddresses[0]);
+    }
+    if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
-  // Save cart to localStorage
+  // Save to localStorage
   useEffect(() => {
     localStorage.setItem('quickcart-cart', JSON.stringify(cart));
   }, [cart]);
@@ -33,6 +47,18 @@ const Index = () => {
   useEffect(() => {
     localStorage.setItem('quickcart-favorites', JSON.stringify(favorites));
   }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('quickcart-addresses', JSON.stringify(addresses));
+  }, [addresses]);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('quickcart-user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('quickcart-user');
+    }
+  }, [user]);
 
   const filteredProducts = useMemo(() => {
     return PRODUCTS.filter((p) => {
@@ -68,12 +94,33 @@ const Index = () => {
     });
   };
 
-  const placeOrder = () => {
+  const goToCheckout = () => {
+    setScreen('checkout');
+  };
+
+  const handlePayment = (method: string) => {
     setCart([]);
     setScreen('success');
-    toast.success('Order placed successfully!', {
+    toast.success(`Order placed with ${method.toUpperCase()}!`, {
       duration: 3000,
     });
+  };
+
+  const handleAddAddress = (address: Address) => {
+    setAddresses(prev => [...prev, address]);
+    setSelectedAddress(address);
+    toast.success('Address saved!', { duration: 2000 });
+  };
+
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    setScreen('profile');
+    toast.success(`Welcome, ${userData.name}!`, { duration: 2000 });
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    toast('Logged out successfully', { duration: 2000 });
   };
 
   const totalCartItems = cart.reduce((sum, item) => sum + item.qty, 0);
@@ -123,16 +170,50 @@ const Index = () => {
       )}
 
       {screen === 'cart' && (
-        <CartScreen cart={cart} setCart={setCart} onOrder={placeOrder} />
+        <CartScreen cart={cart} setCart={setCart} onCheckout={goToCheckout} />
       )}
 
-      {screen === 'profile' && <ProfileScreen />}
+      {screen === 'checkout' && (
+        <CheckoutScreen 
+          cart={cart}
+          selectedAddress={selectedAddress}
+          onSelectAddress={() => setScreen('address')}
+          onPayment={handlePayment}
+          onBack={() => setScreen('cart')}
+        />
+      )}
+
+      {screen === 'address' && (
+        <AddressScreen
+          addresses={addresses}
+          selectedAddress={selectedAddress}
+          onSelectAddress={(addr) => {
+            setSelectedAddress(addr);
+            setScreen('checkout');
+          }}
+          onAddAddress={handleAddAddress}
+          onBack={() => setScreen('checkout')}
+        />
+      )}
+
+      {screen === 'auth' && (
+        <AuthScreen onBack={() => setScreen('profile')} onLogin={handleLogin} />
+      )}
+
+      {screen === 'profile' && (
+        <ProfileScreen 
+          user={user} 
+          onSignIn={() => setScreen('auth')} 
+          onLogout={handleLogout}
+          onAddresses={() => setScreen('address')}
+        />
+      )}
 
       {screen === 'success' && (
         <OrderSuccess onBack={() => setScreen('home')} />
       )}
 
-      {screen !== 'success' && (
+      {!['success', 'checkout', 'address', 'auth'].includes(screen) && (
         <BottomNav active={screen} setActive={setScreen} cartCount={totalCartItems} />
       )}
     </div>
