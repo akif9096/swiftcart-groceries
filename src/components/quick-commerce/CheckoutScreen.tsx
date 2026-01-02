@@ -2,6 +2,8 @@ import { CreditCard, Wallet, Banknote, MapPin, Clock, ChevronRight, ShieldCheck 
 import { CartItem, Address } from './types';
 import { useState } from 'react';
 
+const isDataUrl = (s: string) => s && s.startsWith && s.startsWith('data:');
+
 interface CheckoutScreenProps {
   cart: CartItem[];
   selectedAddress: Address | null;
@@ -93,7 +95,15 @@ export const CheckoutScreen = ({
           {cart.map(item => (
             <div key={item.id} className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <span className="text-xl">{item.image}</span>
+                <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                  {isDataUrl(item.image) ? (
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xl">{item.image}</span>
+                  )}
+                </div>
                 <span className="text-sm font-medium text-foreground">{item.name} × {item.qty}</span>
               </div>
               <span className="font-semibold text-foreground">₹{item.price * item.qty}</span>

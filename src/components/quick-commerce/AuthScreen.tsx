@@ -218,7 +218,10 @@ export const AuthScreen = ({ onBack, onLogin }: AuthScreenProps) => {
 
         {/* Social Login */}
         <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-card rounded-2xl shadow-card hover:shadow-card-hover transition-shadow">
+          <button
+            onClick={() => { window.location.href = '/api/auth/google'; }}
+            className="flex-1 flex items-center justify-center gap-2 py-3 bg-card rounded-2xl shadow-card hover:shadow-card-hover transition-shadow"
+          >
             <span className="text-xl">📱</span>
             <span className="font-semibold text-foreground text-sm">Google</span>
           </button>

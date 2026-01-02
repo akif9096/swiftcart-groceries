@@ -6,12 +6,13 @@ interface ProfileScreenProps {
   onSignIn: () => void;
   onLogout: () => void;
   onAddresses: () => void;
+  onNavigate?: (screen: string) => void;
 }
 
-export const ProfileScreen = ({ user, onSignIn, onLogout, onAddresses }: ProfileScreenProps) => {
+export const ProfileScreen = ({ user, onSignIn, onLogout, onAddresses, onNavigate }: ProfileScreenProps) => {
   const menuItems = [
-    { icon: Package, label: 'My Orders', badge: '3', action: () => {} },
-    { icon: Heart, label: 'Favorites', action: () => {} },
+    { icon: Package, label: 'My Orders', badge: '3', action: () => onNavigate && onNavigate('orders') },
+    { icon: Heart, label: 'Favorites', action: () => onNavigate && onNavigate('favorites') },
     { icon: MapPin, label: 'Saved Addresses', action: onAddresses },
     { icon: CreditCard, label: 'Payment Methods', action: () => {} },
     { icon: Bell, label: 'Notifications', action: () => {} },

@@ -6,6 +6,7 @@ import { CartScreen } from '@/components/quick-commerce/CartScreen';
 import { BottomNav } from '@/components/quick-commerce/BottomNav';
 import { OrderSuccess } from '@/components/quick-commerce/OrderSuccess';
 import { ProfileScreen } from '@/components/quick-commerce/ProfileScreen';
+import { Favorites } from '@/components/quick-commerce/Favorites';
 import { CheckoutScreen } from '@/components/quick-commerce/CheckoutScreen';
 import { AddressScreen } from '@/components/quick-commerce/AddressScreen';
 import { AuthScreen } from '@/components/quick-commerce/AuthScreen';
@@ -48,6 +49,37 @@ const Index = () => {
     }
     if (savedUser) setUser(JSON.parse(savedUser));
     if (savedProducts) setProducts(JSON.parse(savedProducts));
+
+    // Handle OAuth token returned from backend (e.g., /api/auth/google/callback redirected here)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tokenParam = params.get('token');
+      if (tokenParam) {
+        // save token and fetch user info
+        localStorage.setItem('quickcart-user-token', tokenParam);
+        fetch('/api/auth/me', { headers: { Authorization: `Bearer ${tokenParam}` } })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data && data.ok && data.user) {
+              setUser(data.user);
+              // remove token param from url
+              const url = new URL(window.location.href);
+              url.searchParams.delete('token');
+              window.history.replaceState({}, document.title, url.toString());
+            }
+          })
+          .catch(() => {});
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Show login prompt once for new visitors (if not logged in)
+    const promptShown = localStorage.getItem('quickcart-login-prompt-shown');
+    if (!savedUser && !promptShown) {
+      setShowLoginPrompt(true);
+      localStorage.setItem('quickcart-login-prompt-shown', '1');
+    }
   }, []);
 
   // Save to localStorage
@@ -158,46 +190,70 @@ const Index = () => {
   const grandTotal = cartTotal + deliveryFee + taxes;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-background pb-24">
+    <div className="max-w-screen-sm md:max-w-6xl mx-auto min-h-screen bg-background pb-28 px-4">
       {screen === 'home' && (
         <>
-          <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} onLocationClick={() => setScreen('address')} />
           <CategoryBar
             categories={CATEGORIES}
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
           />
-          
-          <div className="px-4 mb-3">
-            <h2 className="text-lg font-bold text-foreground">
-              {selectedCategory === 'all' 
-                ? 'All Products' 
-                : CATEGORIES.find(c => String(c.id) === selectedCategory)?.name || 'Products'}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''} available
-            </p>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4 px-4">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAdd={addToCart}
-                onFav={toggleFavorite}
-                isFavorite={favorites.includes(product.id)}
-              />
-            ))}
-          </div>
-
-          {filteredProducts.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <span className="text-6xl mb-4">🔍</span>
-              <p className="text-muted-foreground font-medium">No products found</p>
-              <p className="text-sm text-muted-foreground mt-1">Try a different search or category</p>
+          {/* Hero / Featured banner */}
+          <div className="mt-3">
+            <div className="rounded-2xl gradient-header p-4 text-white shadow-card mb-4">
+              <h2 className="text-lg font-bold">Today's Deals</h2>
+              <p className="text-sm opacity-90">Fresh groceries delivered fast — big savings today</p>
             </div>
-          )}
+          </div>
+
+          <div className="flex gap-4">
+            {/* Sidebar on medium+ screens */}
+            <aside className="hidden md:block w-64 bg-sidebar-background rounded-2xl p-4 border border-sidebar-border">
+              <div className="text-sm font-semibold text-sidebar-foreground mb-2">Store</div>
+              <div className="text-xs text-muted-foreground">Open · 30–40 min</div>
+              <div className="mt-4 space-y-3">
+                <button className="w-full text-left btn-cta">Quick Picks</button>
+                <button className="w-full text-left btn-cta/50">Offers</button>
+                <button className="w-full text-left btn-cta/50">Essentials</button>
+              </div>
+            </aside>
+
+            {/* Product grid */}
+            <main className="flex-1">
+              <div className="px-0 mb-3">
+                <h2 className="text-lg font-bold text-foreground">
+                  {selectedCategory === 'all'
+                    ? 'All Products'
+                    : CATEGORIES.find((c) => String(c.id) === selectedCategory)?.name || 'Products'}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {filteredProducts.length} item{filteredProducts.length !== 1 ? 's' : ''} available
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 product-grid-gap">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAdd={addToCart}
+                    onFav={toggleFavorite}
+                    isFavorite={favorites.includes(product.id)}
+                  />
+                ))}
+              </div>
+
+              {filteredProducts.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <span className="text-6xl mb-4">🔍</span>
+                  <p className="text-muted-foreground font-medium">No products found</p>
+                  <p className="text-sm text-muted-foreground mt-1">Try a different search or category</p>
+                </div>
+              )}
+            </main>
+          </div>
         </>
       )}
 
@@ -238,6 +294,16 @@ const Index = () => {
           onSignIn={() => setScreen('auth')} 
           onLogout={handleLogout}
           onAddresses={() => setScreen('address')}
+          onNavigate={(s) => setScreen(s)}
+        />
+      )}
+
+      {screen === 'favorites' && (
+        <Favorites
+          products={products}
+          favorites={favorites}
+          onAdd={addToCart}
+          onFavToggle={toggleFavorite}
         />
       )}
 

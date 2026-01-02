@@ -1,6 +1,8 @@
 import { Star, Clock, Heart, Plus } from 'lucide-react';
 import { Product } from './types';
 
+const isDataUrl = (s: string) => s && s.startsWith && s.startsWith('data:');
+
 interface ProductCardProps {
   product: Product;
   onAdd: (product: Product) => void;
@@ -9,48 +11,57 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, onAdd, onFav, isFavorite }: ProductCardProps) => (
-  <div className="bg-card rounded-2xl p-4 shadow-card hover:shadow-card-hover transition-all duration-300 animate-scale-in group">
-    <div className="flex justify-between items-start mb-2">
-      <div className="text-5xl group-hover:scale-110 transition-transform duration-300">{product.image}</div>
-      <button 
+  <div className="card-elevated card-3d p-3 animate-scale-in">
+    <div className="relative rounded-2xl overflow-hidden bg-muted inset-soft">
+      <div className="w-full h-44 sm:h-40 md:h-44 lg:h-44 bg-muted flex items-center justify-center image-3d">
+        {isDataUrl(product.image) ? (
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="text-6xl">{product.image}</div>
+        )}
+      </div>
+
+      {/* Price chip */}
+      <div className="price-chip absolute left-3 top-3">₹{product.price}</div>
+
+      {/* Favorite */}
+      <button
         onClick={() => onFav(product.id)}
-        className="p-2 rounded-full bg-muted/50 hover:bg-muted transition-colors"
+        className="absolute right-3 top-3 p-2 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-sm"
       >
-        <Heart 
+        <Heart
           className={`w-4 h-4 transition-all duration-200 ${
-            isFavorite 
-              ? 'text-destructive fill-destructive animate-pulse-once' 
-              : 'text-muted-foreground hover:text-destructive'
-          }`} 
+            isFavorite ? 'text-destructive fill-destructive animate-pulse-once' : 'text-muted-foreground hover:text-destructive'
+          }`}
         />
       </button>
-    </div>
 
-    <h3 className="font-bold text-foreground text-sm leading-tight">{product.name}</h3>
-    {product.unit && (
-      <p className="text-xs text-muted-foreground mt-0.5">{product.unit}</p>
-    )}
-
-    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
-      <span className="flex items-center gap-1">
-        <Star className="w-3.5 h-3.5 fill-accent text-accent" />
-        <span className="font-semibold">{product.rating}</span>
-      </span>
-      <span className="flex items-center gap-1">
-        <Clock className="w-3.5 h-3.5" />
-        <span>{product.eta}</span>
-      </span>
-    </div>
-
-    <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
-      <span className="font-extrabold text-success text-lg">₹{product.price}</span>
+      {/* Add pill */}
       <button
         onClick={() => onAdd(product)}
-        className="flex items-center gap-1.5 gradient-primary text-primary-foreground px-4 py-2 rounded-xl font-bold text-sm shadow-button hover:opacity-90 active:scale-95 transition-all"
+        className="add-pill absolute right-3 bottom-3 flex items-center justify-center btn-3d"
+        aria-label={`Add ${product.name}`}
       >
-        <Plus className="w-4 h-4" />
-        Add
+        <Plus className="w-4 h-4 text-white drop-shadow-md" />
       </button>
+    </div>
+
+    <div className="mt-3">
+      <h3 className="font-semibold text-foreground text-sm leading-tight line-clamp-2">{product.name}</h3>
+      {product.unit && <p className="text-xs text-muted-foreground mt-0.5">{product.unit}</p>}
+
+      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
+        <span className="flex items-center gap-1">
+          <Star className="w-3.5 h-3.5 fill-accent text-accent" />
+          <span className="font-semibold">{product.rating}</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <Clock className="w-3.5 h-3.5" />
+          <span>{product.eta}</span>
+        </span>
+      </div>
     </div>
   </div>
 );

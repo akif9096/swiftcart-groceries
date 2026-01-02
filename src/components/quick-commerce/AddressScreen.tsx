@@ -1,4 +1,5 @@
 import { MapPin, Plus, Home, Briefcase, Heart, ChevronRight, Navigation } from 'lucide-react';
+import MapPicker from './MapPicker';
 import { Address } from './types';
 import { useState } from 'react';
 
@@ -67,6 +68,18 @@ export const AddressScreen = ({
     }
   };
 
+  // Map picker modal state
+  const [showMapPicker, setShowMapPicker] = useState(false);
+
+  const handleSelectOnMap = () => {
+    setShowMapPicker(true);
+  };
+
+  const handleMapSelect = (addr: Address) => {
+    onAddAddress(addr);
+    setShowMapPicker(false);
+  };
+
   return (
     <div className="p-4 animate-slide-up pb-8">
       <div className="flex items-center gap-3 mb-6">
@@ -88,6 +101,23 @@ export const AddressScreen = ({
         </div>
         <ChevronRight className="w-5 h-5 text-primary" />
       </button>
+
+      {/* Select on Map */}
+      <button
+        onClick={handleSelectOnMap}
+        className="w-full bg-card rounded-2xl p-4 flex items-center gap-3 mb-4 hover:shadow-card-hover transition-shadow"
+      >
+        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+          <MapPin className="w-6 h-6 text-muted-foreground" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="font-bold text-foreground">Select on Map</p>
+          <p className="text-sm text-muted-foreground">Tap the map to choose delivery location</p>
+        </div>
+        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+      </button>
+
+      <MapPicker open={showMapPicker} onClose={() => setShowMapPicker(false)} onSelect={handleMapSelect} />
 
       {/* Saved Addresses */}
       {addresses.length > 0 && (

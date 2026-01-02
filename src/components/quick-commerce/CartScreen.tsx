@@ -1,6 +1,8 @@
 import { Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { CartItem } from './types';
 
+const isDataUrl = (s: string) => s && s.startsWith && s.startsWith('data:');
+
 interface CartScreenProps {
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
@@ -46,8 +48,16 @@ export const CartScreen = ({ cart, setCart, onCheckout }: CartScreenProps) => {
               key={item.id}
               className="flex items-center gap-3 bg-card p-4 rounded-2xl shadow-card"
             >
-              <span className="text-3xl">{item.image}</span>
-              
+              <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                {isDataUrl(item.image) ? (
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-3xl">{item.image}</span>
+                )}
+              </div>
+
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-foreground text-sm truncate">{item.name}</h3>
                 <p className="text-xs text-muted-foreground">{item.unit}</p>
